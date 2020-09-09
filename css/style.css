@@ -32,13 +32,13 @@ body {
   color: #8f8f8f;
   font-size: 1.1rem;
   font-weight: 300;
-  background-image: url(../img/bckgnd.jpg);
+  background-image: url("../img/bckgnd.jpg") !important;
   background-repeat: no-repeat;
   background-size: cover;
   -webkit-background-size: cover;
   background-attachment: fixed;
   background-position: center center;
-  overflow-x: hidden;
+  /* overflow-x: hidden; */
 }
 
 h1,
@@ -3276,7 +3276,7 @@ h6 {
   background: #f8c86d;
 }
 
-/* 
+/*
 .cardBox:nth-child(1) .card .back {
   background: cornflowerblue;
 }
@@ -3447,7 +3447,7 @@ h6 {
     display: inline-block !important;
     width: 80% !important;
     margin-left: 1rem !important;
-     z-index: 5 !important; 
+     z-index: 5 !important;
   }*/
 }
 
