@@ -5,6 +5,7 @@ button.onclick = () => {
     if (msg == "") {
          msg = 'Please enter some text';
     }
+    document.getElementById("robot_question").innerText = msg;
     const utt = new SpeechSynthesisUtterance(msg);
     // Prevent garbage collection of utt object
     console.log(utt);
