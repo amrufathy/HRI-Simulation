@@ -3468,10 +3468,11 @@ h6 {
 }
 
 video {
-  object-fit: cover;
-  width: 100vw;
-  height: 100vh;
-  position: fixed;
-  top: 0;
-  left: 0;
+  /* object-fit: cover; */
+  width: 50vw;
+  height: 50vh;
+  margin: 1em 0 0 0;
+  /* position: fixed; */
+  /* top: 0; */
+  /* left: 0; */
 }

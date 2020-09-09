@@ -172,3 +172,13 @@ button.onclick = () => {
             // noteContent += transcript;
             noteTextarea.innerText = transcript;
         }
+
+        navigator.mediaDevices.getUserMedia({video: true}).then(mediaStream => {
+          const video = document.getElementById('video-cam');
+          video.srcObject = mediaStream;
+          video.onloadedmetadata = (e) => {
+            video.play();
+          };
+        }).catch(err => {
+          console.log('Video is not working');
+        });
