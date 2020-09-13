@@ -1,58 +1,32 @@
-let questionss = ['What\'s your name', 'How are you'];
-let questions_Idx = 0;
+let questions;
+let qIdx = 0;
 
-// let questionss = ['What\'s your name', 'How are you'];
-// let questions_Idx = 0;
+//---------------------------------------------------------------------------------- Start Interview popup
 
-function fade(element) {
-  var op = 1;  // initial opacity
-  var timer = setInterval(function () {
-    if (op <= 0.1){
-          clearInterval(timer);
-          element.style.display = 'none';
-      }
-      element.style.opacity = op;
-      element.style.filter = 'alpha(opacity=' + op * 100 + ")";
-      op -= op * 0.1;
-    }, 50);
-  }
+$(document).ready(function () {
+  readTextFile('./assets/questions.txt');
 
-function unfade(element) {
-  var op = 0.1;  // initial opacity
-  element.style.display = 'block';
-  var timer = setInterval(function () {
-      if (op >= 1){
-        clearInterval(timer);
-      }
-      element.style.opacity = op;
-      element.style.filter = 'alpha(opacity=' + op * 100 + ")";
-      op += op * 0.1;
-    }, 10);
-  }
+  setTimeout(function () { unfade($('#cookie-banner')[0]); }, 1000);
+});
 
-  //---------------------------------------------------------------------------------- Start Interview popup
+$('#cookie-banner-close').click(function () {
+  fade($('#cookie-banner')[0]);
+  unfade($('#main')[0]);
 
-window.onload = () => {
-  var cookie_banner = document.getElementById('cookie-banner');
-  setTimeout(function(){unfade(cookie_banner); }, 1000);
-};
-
-cookie_banner_close.onclick = () => {
-  fade(document.getElementById('cookie-banner'));
-  unfade(document.getElementById('main'));
-};
+  // start the interview with the first question
+  setTimeout(function () { robotSay(questions[qIdx]); }, 100);
+  request('http://localhost:5000/LWave');
+});
 
 //---------------------------------------------------------------------------------- Question Speech2Text
 
-button.onclick = () => {
-  // console.log('start script');
-  // button.disabled = true;
-  var msg = document.getElementById('fname').value;
+$('#commandSayBtn').click(function () {
+  var msg = $('#fname').val();
   if (msg == "") {
     msg = 'Please enter some text';
   }
   // Add robot questions here
-  document.getElementById("robot_question").innerText = msg;
+  $('#robot_question').html(msg);
   const utt = new SpeechSynthesisUtterance(msg);
   // Prevent garbage collection of utt object
   console.log(utt);
@@ -67,10 +41,7 @@ button.onclick = () => {
   });
 
   speechSynthesis.speak(utt);
-  // setTimeout(() => {
-  //     console.log('finished?');
-  // }, 100);
-};
+});
 
 //---------------------------------------------------------------------------------- Audio Recording & Downloading
 
@@ -81,94 +52,80 @@ let audioIN = { audio: true };
 // 'then()' method returns a Promise
 navigator.mediaDevices.getUserMedia(audioIN).then(function (mediaStreamObj) {
 
-    // Connect the media stream to the first audio element
-    //returns the recorded audio via 'audio' tag
-    let audio = document.querySelector('audio');
+  // Connect the media stream to the first audio element
+  //returns the recorded audio via 'audio' tag
+  let audio = document.querySelector('audio');
 
-    // 'srcObject' is a property which takes the media object. This is supported in the newer browsers
-    if ("srcObject" in audio) {
-      audio.srcObject = mediaStreamObj;
-    }
-    else {   // Old version
-      audio.src = window.URL.createObjectURL(mediaStreamObj);
-    }
+  // 'srcObject' is a property which takes the media object. This is supported in the newer browsers
+  if ("srcObject" in audio) {
+    audio.srcObject = mediaStreamObj;
+  } else {   // Old version
+    audio.src = window.URL.createObjectURL(mediaStreamObj);
+  }
 
-    // It will play the audio
-    // audio.onloadedmetadata = function (ev) {
-      // Play the audio in the 2nd audio
-      // element what is being recorded
-      // audio.play();
-    // };
+  // 2nd audio tag for play the audio
+  let playAudio = document.getElementById('adioPlay');
 
-    // Start record
-    let start = document.getElementById('btnStart');
+  // This is the main thing to record the audio 'MediaRecorder' API
+  let mediaRecorder = new MediaRecorder(mediaStreamObj);
+  // Pass the audio stream
 
-    // Stop record
-    let stop = document.getElementById('btnStop');
+  // start record event
+  $('#btnStart').click(function () {
+    $('#btnStart').html("Recording...");
+    $('#btnStop').prop('disabled', false);
+    mediaRecorder.start();
+    recognition.start();
+  });
 
-    // 2nd audio tag for play the audio
-    let playAudio = document.getElementById('adioPlay');
+  // stop record event
+  $('#btnStop').click(function () {
+    mediaRecorder.stop();
+    $('#btnStart').html("Start Recording");
+    $('#btnStop').prop('disabled', true);
 
-    // This is the main thing to recorde
-    // the audio 'MediaRecorder' API
-    let mediaRecorder = new MediaRecorder(mediaStreamObj);
-    // Pass the audio stream
+    // proceed through questions when user finishes recording previous answer
+    if (qIdx < questions.length - 1) qIdx++;
+    setTimeout(function () { robotSay(questions[qIdx]); }, 1000);
+  });
 
-    // Start event
-    start.addEventListener('click', function (ev) {
-      document.getElementById('btnStart').innerText = "Recording...";
-      document.getElementById('btnStop').disabled = false;
-      mediaRecorder.start();
-      recognition.start();
-      // console.log(mediaRecorder.state);
-    });
+  // If audio data available then push
+  // it to the chunk array
+  mediaRecorder.ondataavailable = function (ev) {
+    dataArray.push(ev.data);
+  }
 
-    // Stop event
-    stop.addEventListener('click', function (ev) {
-      mediaRecorder.stop();
-      document.getElementById('btnStart').innerText = "Start Recording";
-      document.getElementById('btnStop').disabled = true;
-      questions_Idx += 1;
-    });
+  // Chunk array to store the audio data
+  let dataArray = [];
 
-    // If audio data available then push
-    // it to the chunk array
-    mediaRecorder.ondataavailable = function (ev) {
-      dataArray.push(ev.data);
-    }
+  // Convert the audio data in to blob
+  // after stopping the recording
+  mediaRecorder.onstop = function (ev) {
 
-    // Chunk array to store the audio data
-    let dataArray = [];
+    // blob of type mp3
+    let audioData = new Blob(dataArray, { 'type': 'audio/mp3;' });
 
-    // Convert the audio data in to blob
-    // after stopping the recording
-    mediaRecorder.onstop = function (ev) {
+    // After fill up the chunk array make it empty
+    dataArray = [];
 
-      // blob of type mp3
-      let audioData = new Blob(dataArray, { 'type': 'audio/mp3;' });
+    // to download audio file when done
+    var a = document.createElement("a");
+    document.body.appendChild(a);
+    a.style = "display: none";
 
-      // After fill up the chunk
-      // array make it empty
-      dataArray = [];
+    // Creating audio url with reference
+    // of created blob named 'audioData'
+    let audioSrc = window.URL.createObjectURL(audioData);
+    a.href = audioSrc;
+    a.download = 'answerToQuestion'.concat(qIdx.toString(), '.mp3');
+    a.click();
+    window.URL.revokeObjectURL(audioSrc);
+    // console.log(audioSrc)
 
-      // to download audio file when done
-      var a = document.createElement("a");
-      document.body.appendChild(a);
-      a.style = "display: none";
-
-      // Creating audio url with reference
-      // of created blob named 'audioData'
-      let audioSrc = window.URL.createObjectURL(audioData);
-      a.href = audioSrc;
-      a.download = 'answerToQuestion'.concat(questions_Idx.toString(), '.mp3');
-      a.click();
-      window.URL.revokeObjectURL(audioSrc);
-      // console.log(audioSrc)
-
-      // Pass the audio url to the 2nd video tag
-      playAudio.src = audioSrc;
-    }
-  })
+    // Pass the audio url to the 2nd video tag
+    playAudio.src = audioSrc;
+  }
+})
 
   // If any error occurs then handles the error
   .catch(function (err) {
@@ -186,22 +143,18 @@ try {
   alert('Speech Recongition is not supported on this browser');
 }
 
-let instructions = document.getElementById('instructions');
-let noteContent = document.getElementById('noteContent')
-
 // Define some event handlers listening to changes in the API
 recognition.onstart = function () {
-  instructions.innerHTML = 'Voice recognition activated.<br/>Try speaking into the microphone.';
+  $('#instructions').html('Voice recognition activated.<br/>Try speaking into the microphone.');
 }
 
 recognition.onspeechend = function () {
-  // instructions.innerText = 'You were quiet for a while so Voice recognition turned itself off.';
-  instructions.innerText = 'Voice recognition turned off.';
+  $('#instructions').html('Voice recognition turned off.');
 }
 
 recognition.onerror = function (event) {
   if (event.error == 'no-speech') {
-    instructions.innerText = 'No speech was detected. Try again.';
+    $('#instructions').html('No speech was detected. Try again.');
   };
 }
 
@@ -215,7 +168,6 @@ recognition.onresult = function (event) {
   var transcript = event.results[current][0].transcript;
 
   // Add the current transcript to the contents of our Note.
-  // noteContent += transcript;
   noteTextarea.innerText = transcript;
   interview_logging['questions'].push({
     "Pepper_Question": document.getElementById('robot_question').innerText,
@@ -224,14 +176,14 @@ recognition.onresult = function (event) {
   });
   // console.log(interview_logging);
   // Check if interview questions are over, then stringify and print the logged data
-  if (questionss.length == questions_Idx) {
+  if (questions.length == qIdx) {
     var logging_string = ''
     var logged_questions = interview_logging['questions'];
     for (var key = 0; key < logged_questions.length; key++) {
       logging_string = logging_string.concat("Question #", (key + 1).toString(), ":", logged_questions[key]["Pepper_Question"], '\n',
-                                             "Answer:", logged_questions[key]["User_Answer"], '\n',
-                                             "User Emotion:", logged_questions[key]["Emotion"], '.',
-                                             '\n');
+        "Answer:", logged_questions[key]["User_Answer"], '\n',
+        "User Emotion:", logged_questions[key]["Emotion"], '.',
+        '\n');
     }
     saveTextAsFile(logging_string);
     // Show the "End Interview" popup and hide the rest
@@ -258,64 +210,3 @@ navigator.mediaDevices.getUserMedia({ video: true }).then(mediaStream => {
 var interview_logging = {
   "questions": []
 };
-
-function saveTextAsFile(textToWrite) {
-    var textFileAsBlob = new Blob([textToWrite], {type:'text/plain'});
-    var fileNameToSaveAs = "interview_log_file.txt";
-    var a = document.createElement("a");
-    document.body.appendChild(a);
-    a.style = "display: none";
-    let textSrc = window.URL.createObjectURL(textFileAsBlob);
-    a.href = textSrc;
-    a.download = fileNameToSaveAs;
-    a.click();
-    window.URL.revokeObjectURL(textFileAsBlob);
-}
-
-function readTextFile(file) {
-    var rawFile = new XMLHttpRequest();
-    var allText = '';
-    rawFile.open("GET", file, false);
-    rawFile.onreadystatechange = function () {
-        if(rawFile.readyState === 4) {
-            if(rawFile.status === 200 || rawFile.status == 0) {
-                allText = rawFile.responseText;
-            }
-        }
-    }
-    rawFile.send(null);
-    return allText;
-}
-
-function robotSay(msg) {
-    document.getElementById("robot_question").innerText = msg;
-    const utt = new SpeechSynthesisUtterance(msg);
-    speechSynthesis.speak(utt);
-}
-
-
-function request(url) {
-    var xhttp = new XMLHttpRequest();
-    xhttp.open('GET', url, true);
-    xhttp.send();
-}
-
-// read questions from file on document ready
-(function() {
-    questions = readTextFile('./assets/questions.txt').split('\n');
-})();
-
-// start the interview with the first question
-let startInterview = document.getElementById('startInterview');
-startInterview.addEventListener('click', function () {
-    robotSay(questions[questions_Idx]);
-    startInterview.style.visibility = 'hidden';
-    request('http://localhost:5000/LWave');
-});
-
-// proceed through questions when user finishes recording previous answer
-let btnStop = document.getElementById('btnStop');
-btnStop.addEventListener('click', function (ev) {
-    if (questions_Idx < questions.length - 1) questions_Idx++;
-    setTimeout(function() { robotSay(questions[questions_Idx]); }, 1000);
-});
