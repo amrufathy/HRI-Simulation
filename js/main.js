@@ -52,7 +52,6 @@ let audioIN = { audio: true };
 // Access the permission for use the microphone
 // 'then()' method returns a Promise
 navigator.mediaDevices.getUserMedia(audioIN).then(function (mediaStreamObj) {
-
   // Connect the media stream to the first audio element
   //returns the recorded audio via 'audio' tag
   let audio = document.querySelector('audio');
@@ -87,8 +86,8 @@ navigator.mediaDevices.getUserMedia(audioIN).then(function (mediaStreamObj) {
 
     // proceed through questions when user finishes recording previous answer
     // if (qIdx < questions.length - 1) 
-    qIdx++;
-    setTimeout(function () { robotSay(questions[qIdx]); }, 1000);
+    // qIdx++;
+    // setTimeout(function () { robotSay(questions[qIdx]); }, 1000);
   });
 
   // If audio data available then push
@@ -115,17 +114,27 @@ navigator.mediaDevices.getUserMedia(audioIN).then(function (mediaStreamObj) {
     document.body.appendChild(a);
     a.style = "display: none";
 
-    // Creating audio url with reference
-    // of created blob named 'audioData'
+    // Creating audio url with reference of created blob named 'audioData'
     let audioSrc = window.URL.createObjectURL(audioData);
     a.href = audioSrc;
-    a.download = 'answerToQuestion'.concat(qIdx.toString(), '.mp3');
+    a.download = `answerToQuestion${qIdx.toString()}.mp3`;
     a.click();
     window.URL.revokeObjectURL(audioSrc);
-    // console.log(audioSrc)
 
     // Pass the audio url to the 2nd video tag
     playAudio.src = audioSrc;
+
+    // call emotion recognition api
+    $.ajax({
+      url: 'http://localhost:5001/emotion',
+      data: { file_name: `answerToQuestion${qIdx.toString()}.mp3` },
+      success: function (response) {
+        console.log(response);
+        // proceed through questions when user finishes recording previous answer
+        qIdx++;
+        setTimeout(function () { robotSay(questions[qIdx]); }, 1000);
+      }
+    });
   }
 })
 
