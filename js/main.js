@@ -1,6 +1,8 @@
+let questionss = ['What\'s your name', 'How are you'];
+let questions_Idx = 0;
 
-let questions = ['What\'s your name', 'How are you'];
-let qIdx = 0;
+// let questionss = ['What\'s your name', 'How are you'];
+// let questions_Idx = 0;
 
 function fade(element) {
   var op = 1;  // initial opacity
@@ -43,19 +45,20 @@ cookie_banner_close.onclick = () => {
 //---------------------------------------------------------------------------------- Question Speech2Text
 
 button.onclick = () => {
-  console.log('start script');
+  // console.log('start script');
   // button.disabled = true;
   var msg = document.getElementById('fname').value;
   if (msg == "") {
     msg = 'Please enter some text';
   }
+  // Add robot questions here
   document.getElementById("robot_question").innerText = msg;
   const utt = new SpeechSynthesisUtterance(msg);
   // Prevent garbage collection of utt object
   console.log(utt);
 
   utt.addEventListener('end', () => {
-    console.log('end event triggered');
+    // console.log('end event triggered');
   });
 
   // just for debugging completeness, no errors seem to be thrown though
@@ -125,7 +128,7 @@ navigator.mediaDevices.getUserMedia(audioIN).then(function (mediaStreamObj) {
       mediaRecorder.stop();
       document.getElementById('btnStart').innerText = "Start Recording";
       document.getElementById('btnStop').disabled = true;
-      qIdx += 1;
+      questions_Idx += 1;
     });
 
     // If audio data available then push
@@ -157,7 +160,7 @@ navigator.mediaDevices.getUserMedia(audioIN).then(function (mediaStreamObj) {
       // of created blob named 'audioData'
       let audioSrc = window.URL.createObjectURL(audioData);
       a.href = audioSrc;
-      a.download = 'audiofile.mp3';
+      a.download = 'answerToQuestion'.concat(questions_Idx.toString(), '.mp3');
       a.click();
       window.URL.revokeObjectURL(audioSrc);
       // console.log(audioSrc)
@@ -221,11 +224,11 @@ recognition.onresult = function (event) {
   });
   // console.log(interview_logging);
   // Check if interview questions are over, then stringify and print the logged data
-  if (questions.length == qIdx) {
+  if (questionss.length == questions_Idx) {
     var logging_string = ''
     var logged_questions = interview_logging['questions'];
     for (var key = 0; key < logged_questions.length; key++) {
-      logging_string = logging_string.concat("Question #", key.toString(), ":", logged_questions[key]["Pepper_Question"], '\n',
+      logging_string = logging_string.concat("Question #", (key + 1).toString(), ":", logged_questions[key]["Pepper_Question"], '\n',
                                              "Answer:", logged_questions[key]["User_Answer"], '\n',
                                              "User Emotion:", logged_questions[key]["Emotion"], '.',
                                              '\n');
@@ -268,3 +271,51 @@ function saveTextAsFile(textToWrite) {
     a.click();
     window.URL.revokeObjectURL(textFileAsBlob);
 }
+
+function readTextFile(file) {
+    var rawFile = new XMLHttpRequest();
+    var allText = '';
+    rawFile.open("GET", file, false);
+    rawFile.onreadystatechange = function () {
+        if(rawFile.readyState === 4) {
+            if(rawFile.status === 200 || rawFile.status == 0) {
+                allText = rawFile.responseText;
+            }
+        }
+    }
+    rawFile.send(null);
+    return allText;
+}
+
+function robotSay(msg) {
+    document.getElementById("robot_question").innerText = msg;
+    const utt = new SpeechSynthesisUtterance(msg);
+    speechSynthesis.speak(utt);
+}
+
+
+function request(url) {
+    var xhttp = new XMLHttpRequest();
+    xhttp.open('GET', url, true);
+    xhttp.send();
+}
+
+// read questions from file on document ready
+(function() {
+    questions = readTextFile('./assets/questions.txt').split('\n');
+})();
+
+// start the interview with the first question
+let startInterview = document.getElementById('startInterview');
+startInterview.addEventListener('click', function () {
+    robotSay(questions[qIdx]);
+    startInterview.style.visibility = 'hidden';
+    request('http://localhost:5000/LWave');
+});
+
+// proceed through questions when user finishes recording previous answer
+let btnStop = document.getElementById('btnStop');
+btnStop.addEventListener('click', function (ev) {
+    if (qIdx < questions.length - 1) qIdx++;
+    setTimeout(function() { robotSay(questions[qIdx]); }, 1000);
+});
