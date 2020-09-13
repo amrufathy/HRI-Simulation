@@ -40,6 +40,7 @@ $('#commandSayBtn').click(function () {
     console.log('err', err)
   });
 
+  speechSynthesis.cancel();
   speechSynthesis.speak(utt);
 });
 
@@ -85,7 +86,8 @@ navigator.mediaDevices.getUserMedia(audioIN).then(function (mediaStreamObj) {
     $('#btnStop').prop('disabled', true);
 
     // proceed through questions when user finishes recording previous answer
-    if (qIdx < questions.length - 1) qIdx++;
+    // if (qIdx < questions.length - 1) 
+    qIdx++;
     setTimeout(function () { robotSay(questions[qIdx]); }, 1000);
   });
 
@@ -170,8 +172,8 @@ recognition.onresult = function (event) {
   // Add the current transcript to the contents of our Note.
   noteTextarea.innerText = transcript;
   interview_logging['questions'].push({
-    "Pepper_Question": document.getElementById('robot_question').innerText,
-    "User_Answer": document.getElementById('noteTextarea').innerText,
+    "Pepper_Question": $('#robot_question').html().trim(),
+    "User_Answer": $('#noteTextarea').html().trim(),
     "Emotion": "API RESPONSE"
   });
   // console.log(interview_logging);
@@ -180,15 +182,16 @@ recognition.onresult = function (event) {
     var logging_string = ''
     var logged_questions = interview_logging['questions'];
     for (var key = 0; key < logged_questions.length; key++) {
-      logging_string = logging_string.concat("Question #", (key + 1).toString(), ":", logged_questions[key]["Pepper_Question"], '\n',
-        "Answer:", logged_questions[key]["User_Answer"], '\n',
-        "User Emotion:", logged_questions[key]["Emotion"], '.',
+      logging_string = logging_string.concat(`Question #${(key + 1)}:${logged_questions[key]["Pepper_Question"]}\n`,
+        `Answer:${logged_questions[key]["User_Answer"]}\n`,
+        `User Emotion:${logged_questions[key]["Emotion"]}\n`,
         '\n');
     }
+
     saveTextAsFile(logging_string);
     // Show the "End Interview" popup and hide the rest
-    fade(document.getElementById('main'));
-    unfade(document.getElementById('ending-banner'));
+    fade($('#main')[0]);
+    unfade($('#ending-banner')[0]);
   }
 
 }

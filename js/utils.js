@@ -9,6 +9,7 @@ function readTextFile(file) {
 function robotSay(msg) {
     $('#robot_question').html(msg);
     const utt = new SpeechSynthesisUtterance(msg);
+    speechSynthesis.cancel();
     speechSynthesis.speak(utt);
 }
 
@@ -28,7 +29,7 @@ function fade(element) {
             element.style.display = 'none';
         }
         element.style.opacity = op;
-        element.style.filter = 'alpha(opacity=' + op * 100 + ")";
+        element.style.filter = `alpha(opacity=${op * 100})`;
         op -= op * 0.1;
     }, 50);
 }
@@ -42,7 +43,7 @@ function unfade(element) {
             clearInterval(timer);
         }
         element.style.opacity = op;
-        element.style.filter = 'alpha(opacity=' + op * 100 + ")";
+        element.style.filter = `alpha(opacity=${op * 100})`;
         op += op * 0.1;
     }, 10);
 }
