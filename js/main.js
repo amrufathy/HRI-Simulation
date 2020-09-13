@@ -1,28 +1,34 @@
+
+let questions = ['What\'s your name', 'How are you'];
+let qIdx = 0;
+
 function fade(element) {
   var op = 1;  // initial opacity
   var timer = setInterval(function () {
-      if (op <= 0.1){
+    if (op <= 0.1){
           clearInterval(timer);
           element.style.display = 'none';
       }
       element.style.opacity = op;
       element.style.filter = 'alpha(opacity=' + op * 100 + ")";
       op -= op * 0.1;
-  }, 50);
-}
+    }, 50);
+  }
 
 function unfade(element) {
   var op = 0.1;  // initial opacity
   element.style.display = 'block';
   var timer = setInterval(function () {
       if (op >= 1){
-          clearInterval(timer);
+        clearInterval(timer);
       }
       element.style.opacity = op;
       element.style.filter = 'alpha(opacity=' + op * 100 + ")";
       op += op * 0.1;
-  }, 10);
-}
+    }, 10);
+  }
+
+  //---------------------------------------------------------------------------------- Start Interview popup
 
 window.onload = () => {
   var cookie_banner = document.getElementById('cookie-banner');
@@ -33,6 +39,8 @@ cookie_banner_close.onclick = () => {
   fade(document.getElementById('cookie-banner'));
   unfade(document.getElementById('main'));
 };
+
+//---------------------------------------------------------------------------------- Question Speech2Text
 
 button.onclick = () => {
   console.log('start script');
@@ -61,24 +69,20 @@ button.onclick = () => {
   // }, 100);
 };
 
+//---------------------------------------------------------------------------------- Audio Recording & Downloading
+
 let audioIN = { audio: true };
 //  audio is true, for recording
 
-// Access the permission for use
-// the microphone
-navigator.mediaDevices.getUserMedia(audioIN)
+// Access the permission for use the microphone
+// 'then()' method returns a Promise
+navigator.mediaDevices.getUserMedia(audioIN).then(function (mediaStreamObj) {
 
-  // 'then()' method returns a Promise
-  .then(function (mediaStreamObj) {
-
-    // Connect the media stream to the
-    // first audio element
-    let audio = document.querySelector('audio');
+    // Connect the media stream to the first audio element
     //returns the recorded audio via 'audio' tag
+    let audio = document.querySelector('audio');
 
-    // 'srcObject' is a property which
-    // takes the media object
-    // This is supported in the newer browsers
+    // 'srcObject' is a property which takes the media object. This is supported in the newer browsers
     if ("srcObject" in audio) {
       audio.srcObject = mediaStreamObj;
     }
@@ -87,11 +91,11 @@ navigator.mediaDevices.getUserMedia(audioIN)
     }
 
     // It will play the audio
-    audio.onloadedmetadata = function (ev) {
+    // audio.onloadedmetadata = function (ev) {
       // Play the audio in the 2nd audio
       // element what is being recorded
       // audio.play();
-    };
+    // };
 
     // Start record
     let start = document.getElementById('btnStart');
@@ -121,7 +125,7 @@ navigator.mediaDevices.getUserMedia(audioIN)
       mediaRecorder.stop();
       document.getElementById('btnStart').innerText = "Start Recording";
       document.getElementById('btnStop').disabled = true;
-      // console.log(mediaRecorder.state);
+      qIdx += 1;
     });
 
     // If audio data available then push
@@ -168,6 +172,9 @@ navigator.mediaDevices.getUserMedia(audioIN)
     console.log(err.name, err.message);
   });
 
+//---------------------------------------------------------------------------------- Audio Recognition & Text2Speech
+// Logs the question, user's answer, and the API response
+
 // Check  speech-to-text API supported or not?
 try {
   var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -207,7 +214,31 @@ recognition.onresult = function (event) {
   // Add the current transcript to the contents of our Note.
   // noteContent += transcript;
   noteTextarea.innerText = transcript;
+  interview_logging['questions'].push({
+    "Pepper_Question": document.getElementById('robot_question').innerText,
+    "User_Answer": document.getElementById('noteTextarea').innerText,
+    "Emotion": "API RESPONSE"
+  });
+  // console.log(interview_logging);
+  // Check if interview questions are over, then stringify and print the logged data
+  if (questions.length == qIdx) {
+    var logging_string = ''
+    var logged_questions = interview_logging['questions'];
+    for (var key = 0; key < logged_questions.length; key++) {
+      logging_string = logging_string.concat("Question #", key.toString(), ":", logged_questions[key]["Pepper_Question"], '\n',
+                                             "Answer:", logged_questions[key]["User_Answer"], '\n',
+                                             "User Emotion:", logged_questions[key]["Emotion"], '.',
+                                             '\n');
+    }
+    saveTextAsFile(logging_string);
+    // Show the "End Interview" popup and hide the rest
+    fade(document.getElementById('main'));
+    unfade(document.getElementById('ending-banner'));
+  }
+
 }
+
+//---------------------------------------------------------------------------------- Video preview
 
 navigator.mediaDevices.getUserMedia({ video: true }).then(mediaStream => {
   const video = document.getElementById('video-cam');
@@ -218,3 +249,22 @@ navigator.mediaDevices.getUserMedia({ video: true }).then(mediaStream => {
 }).catch(err => {
   console.log('Video is not working');
 });
+
+//---------------------------------------------------------------------------------- Log the interview
+
+var interview_logging = {
+  "questions": []
+};
+
+function saveTextAsFile(textToWrite) {
+    var textFileAsBlob = new Blob([textToWrite], {type:'text/plain'});
+    var fileNameToSaveAs = "interview_log_file.txt";
+    var a = document.createElement("a");
+    document.body.appendChild(a);
+    a.style = "display: none";
+    let textSrc = window.URL.createObjectURL(textFileAsBlob);
+    a.href = textSrc;
+    a.download = fileNameToSaveAs;
+    a.click();
+    window.URL.revokeObjectURL(textFileAsBlob);
+}

@@ -29,8 +29,18 @@
 <body>
     <div id='cookie-banner' style='display: none'>
         <div class='text-center'>
-            <p> Interview starts by closing this pop up </p>
-            <button id='cookie_banner_close' class="btn">Start Interview</button>    
+            <p class='text-white'> Interview Instructions: </p>
+            <ol class='text-warning'>
+                <li>1. Enable Audio & Video Permissions</li>
+                <li>2. After hearing the question,
+                    <ol>
+                        <li>i. Press Start Recording to record your answer,</li>
+                        <li>ii. when you finish press Stop Recording to proceed to next question.</li>
+                    </ol>
+                </li>
+            </ol>
+            <p class='text-white'> Interview starts by pressing the following button </p>
+            <button id='cookie_banner_close' class="btn">Start Interview</button>
         </div>
     </div>
 
@@ -41,11 +51,11 @@
                     <h3 class='text-white' style="margin: 0 1em 1em 0;">Motivational Interview primary dashboard:</h3>
                 </div>
                 <input type="text" id="fname" name="fname">
-                <br>
-                <br>
+                <!-- <br> -->
+                <!-- <br> -->
                 <button id='button' class='btn'>Press to say a command</button>
 
-                <button id='startInterview' class='btn'>Start Interview</button>
+                <!-- <button id='startInterview' class='btn'>Start Interview</button> -->
                 <br>
                 <div class='row' style="width: 100%;">
                     <label style="margin-right:1em;">Pepper's question was:</label>
@@ -65,11 +75,11 @@
                     <div class='row' style="margin: 1.5em 0 0 0;">
                         <div class='col-sm-12 col-md-12 col-lg-12 text-center'
                             style="width: 100%; display: table-cell; vertical-align: middle; ">
-                            <audio controls style="visibility: hidden; display: none; display:block;"></audio>
+                            <audio controls style="visibility: hidden; display: none;"></audio>
                             <!-- To replay your recording -->
-                            <audio id="adioPlay" controls></audio>
+                            <audio id="adioPlay" controls style="visibility: hidden; display: none;"></audio>
                             <p id='noteContent'></p>
-                            <p id='instructions' class='text-warning'></p>
+                            <p id='instructions' class='text-white'></p>
                             <div class="row" style="width: 100%;">
                                 <label style="margin-right:1em;">Your answer was:</label>
                                 <p id='noteTextarea' class='text-white'></p>
@@ -80,6 +90,13 @@
             </div>
         </div>
     </div>
+
+    <div id='ending-banner' style='display: none'>
+        <div class='text-center'>
+            <p class='text-white'>It was fun having you, see you later.</p>
+        </div>
+    </div>
+
 
     <script src="js/main.js"></script>
     <script src="js/other.js"></script>
