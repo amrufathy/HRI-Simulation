@@ -308,7 +308,7 @@ function request(url) {
 // start the interview with the first question
 let startInterview = document.getElementById('startInterview');
 startInterview.addEventListener('click', function () {
-    robotSay(questions[qIdx]);
+    robotSay(questions[questions_Idx]);
     startInterview.style.visibility = 'hidden';
     request('http://localhost:5000/LWave');
 });
@@ -316,6 +316,6 @@ startInterview.addEventListener('click', function () {
 // proceed through questions when user finishes recording previous answer
 let btnStop = document.getElementById('btnStop');
 btnStop.addEventListener('click', function (ev) {
-    if (qIdx < questions.length - 1) qIdx++;
-    setTimeout(function() { robotSay(questions[qIdx]); }, 1000);
+    if (questions_Idx < questions.length - 1) questions_Idx++;
+    setTimeout(function() { robotSay(questions[questions_Idx]); }, 1000);
 });
