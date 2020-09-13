@@ -31,7 +31,7 @@ let qIdx = 0;
 
 // read questions from file on document ready
 (function() {
-    questions = readTextFile('../questions.txt').split('\n');
+    questions = readTextFile('./assets/questions.txt').split('\n');
 })();
 
 // start the interview with the first question
@@ -48,6 +48,3 @@ btnStop.addEventListener('click', function (ev) {
     if (qIdx < questions.length - 1) qIdx++;
     setTimeout(function() { robotSay(questions[qIdx]); }, 1000);
 });
-
-
-    

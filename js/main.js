@@ -1,184 +1,220 @@
-button.onclick = () => {
-    console.log('start script');
-    // button.disabled = true;
-    var msg = document.getElementById('fname').value;
-    if (msg == "") {
-         msg = 'Please enter some text';
-    }
-    document.getElementById("robot_question").innerText = msg;
-    const utt = new SpeechSynthesisUtterance(msg);
-    // Prevent garbage collection of utt object
-    console.log(utt);
+function fade(element) {
+  var op = 1;  // initial opacity
+  var timer = setInterval(function () {
+      if (op <= 0.1){
+          clearInterval(timer);
+          element.style.display = 'none';
+      }
+      element.style.opacity = op;
+      element.style.filter = 'alpha(opacity=' + op * 100 + ")";
+      op -= op * 0.1;
+  }, 50);
+}
 
-    utt.addEventListener('end', () => {
-        console.log('end event triggered');
-    });
+function unfade(element) {
+  var op = 0.1;  // initial opacity
+  element.style.display = 'block';
+  var timer = setInterval(function () {
+      if (op >= 1){
+          clearInterval(timer);
+      }
+      element.style.opacity = op;
+      element.style.filter = 'alpha(opacity=' + op * 100 + ")";
+      op += op * 0.1;
+  }, 10);
+}
 
-    // just for debugging completeness, no errors seem to be thrown though
-    utt.addEventListener('error', (err) => {
-        console.log('err', err)
-    });
-
-    speechSynthesis.speak(utt);
-    // setTimeout(() => {
-    //     console.log('finished?');
-    // }, 100);
+window.onload = () => {
+  var cookie_banner = document.getElementById('cookie-banner');
+  setTimeout(function(){unfade(cookie_banner); }, 1000);
 };
 
-        let audioIN = { audio: true };
-        //  audio is true, for recording
+cookie_banner_close.onclick = () => {
+  fade(document.getElementById('cookie-banner'));
+  unfade(document.getElementById('main'));
+};
 
-        // Access the permission for use
-        // the microphone
-        navigator.mediaDevices.getUserMedia(audioIN)
+button.onclick = () => {
+  console.log('start script');
+  // button.disabled = true;
+  var msg = document.getElementById('fname').value;
+  if (msg == "") {
+    msg = 'Please enter some text';
+  }
+  document.getElementById("robot_question").innerText = msg;
+  const utt = new SpeechSynthesisUtterance(msg);
+  // Prevent garbage collection of utt object
+  console.log(utt);
 
-      // 'then()' method returns a Promise
-      .then(function (mediaStreamObj) {
+  utt.addEventListener('end', () => {
+    console.log('end event triggered');
+  });
 
-        // Connect the media stream to the
-        // first audio element
-        let audio = document.querySelector('audio');
-        //returns the recorded audio via 'audio' tag
+  // just for debugging completeness, no errors seem to be thrown though
+  utt.addEventListener('error', (err) => {
+    console.log('err', err)
+  });
 
-        // 'srcObject' is a property which
-        // takes the media object
-        // This is supported in the newer browsers
-        if ("srcObject" in audio) {
-          audio.srcObject = mediaStreamObj;
-        }
-        else {   // Old version
-          audio.src = window.URL.createObjectURL(mediaStreamObj);
-        }
+  speechSynthesis.speak(utt);
+  // setTimeout(() => {
+  //     console.log('finished?');
+  // }, 100);
+};
 
-        // It will play the audio
-        audio.onloadedmetadata = function (ev) {
-          // Play the audio in the 2nd audio
-          // element what is being recorded
-          // audio.play();
-        };
+let audioIN = { audio: true };
+//  audio is true, for recording
 
-        // Start record
-        let start = document.getElementById('btnStart');
+// Access the permission for use
+// the microphone
+navigator.mediaDevices.getUserMedia(audioIN)
 
-        // Stop record
-        let stop = document.getElementById('btnStop');
+  // 'then()' method returns a Promise
+  .then(function (mediaStreamObj) {
 
-        // 2nd audio tag for play the audio
-        let playAudio = document.getElementById('adioPlay');
+    // Connect the media stream to the
+    // first audio element
+    let audio = document.querySelector('audio');
+    //returns the recorded audio via 'audio' tag
 
-        // This is the main thing to recorde
-        // the audio 'MediaRecorder' API
-        let mediaRecorder = new MediaRecorder(mediaStreamObj);
-        // Pass the audio stream
+    // 'srcObject' is a property which
+    // takes the media object
+    // This is supported in the newer browsers
+    if ("srcObject" in audio) {
+      audio.srcObject = mediaStreamObj;
+    }
+    else {   // Old version
+      audio.src = window.URL.createObjectURL(mediaStreamObj);
+    }
 
-        // Start event
-        start.addEventListener('click', function (ev) {
-            document.getElementById('btnStart').innerText = "Recording...";
-            document.getElementById('btnStop').disabled = false;
-            mediaRecorder.start();
-            recognition.start();
-            // console.log(mediaRecorder.state);
-        })
+    // It will play the audio
+    audio.onloadedmetadata = function (ev) {
+      // Play the audio in the 2nd audio
+      // element what is being recorded
+      // audio.play();
+    };
 
-        // Stop event
-        stop.addEventListener('click', function (ev) {
-          mediaRecorder.stop();
-          document.getElementById('btnStart').innerText = "Start Recording";
-          document.getElementById('btnStop').disabled = true;
-          // console.log(mediaRecorder.state);
-        });
+    // Start record
+    let start = document.getElementById('btnStart');
 
-        // If audio data available then push
-        // it to the chunk array
-        mediaRecorder.ondataavailable = function (ev) {
-          dataArray.push(ev.data);
-        }
+    // Stop record
+    let stop = document.getElementById('btnStop');
 
-        // Chunk array to store the audio data
-        let dataArray = [];
+    // 2nd audio tag for play the audio
+    let playAudio = document.getElementById('adioPlay');
 
-        // Convert the audio data in to blob
-        // after stopping the recording
-        mediaRecorder.onstop = function (ev) {
+    // This is the main thing to recorde
+    // the audio 'MediaRecorder' API
+    let mediaRecorder = new MediaRecorder(mediaStreamObj);
+    // Pass the audio stream
 
-          // blob of type mp3
-          let audioData = new Blob(dataArray, {'type': 'audio/mp3;'});
+    // Start event
+    start.addEventListener('click', function (ev) {
+      document.getElementById('btnStart').innerText = "Recording...";
+      document.getElementById('btnStop').disabled = false;
+      mediaRecorder.start();
+      recognition.start();
+      // console.log(mediaRecorder.state);
+    });
 
-          // After fill up the chunk
-          // array make it empty
-          dataArray = [];
+    // Stop event
+    stop.addEventListener('click', function (ev) {
+      mediaRecorder.stop();
+      document.getElementById('btnStart').innerText = "Start Recording";
+      document.getElementById('btnStop').disabled = true;
+      // console.log(mediaRecorder.state);
+    });
 
-          // to download audio file when done
-          var a = document.createElement("a");
-          document.body.appendChild(a);
-          a.style = "display: none";
+    // If audio data available then push
+    // it to the chunk array
+    mediaRecorder.ondataavailable = function (ev) {
+      dataArray.push(ev.data);
+    }
 
-          // Creating audio url with reference
-          // of created blob named 'audioData'
-          let audioSrc = window.URL.createObjectURL(audioData);
-          a.href = audioSrc;
-          a.download = 'audiofile.mp3';
-          a.click();
-          window.URL.revokeObjectURL(audioSrc);
-          // console.log(audioSrc)
+    // Chunk array to store the audio data
+    let dataArray = [];
 
-          // Pass the audio url to the 2nd video tag
-          playAudio.src = audioSrc;
-        }
-      })
+    // Convert the audio data in to blob
+    // after stopping the recording
+    mediaRecorder.onstop = function (ev) {
 
-      // If any error occurs then handles the error
-      .catch(function (err) {
-        console.log(err.name, err.message);
-      });
+      // blob of type mp3
+      let audioData = new Blob(dataArray, { 'type': 'audio/mp3;' });
 
-        // Check  speech-to-text API supported or not?
-        try {
-            var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            var recognition = new SpeechRecognition();
-        } catch(e) {
-            alert('Speech Recongition is not supported on this browser');
-        }
+      // After fill up the chunk
+      // array make it empty
+      dataArray = [];
 
-        let instructions = document.getElementById('instructions');
-        let noteContent = document.getElementById('noteContent')
+      // to download audio file when done
+      var a = document.createElement("a");
+      document.body.appendChild(a);
+      a.style = "display: none";
 
-        // Define some event handlers listening to changes in the API
-        recognition.onstart = function() {
-            instructions.innerHTML = 'Voice recognition activated.<br/>Try speaking into the microphone.';
-        }
+      // Creating audio url with reference
+      // of created blob named 'audioData'
+      let audioSrc = window.URL.createObjectURL(audioData);
+      a.href = audioSrc;
+      a.download = 'audiofile.mp3';
+      a.click();
+      window.URL.revokeObjectURL(audioSrc);
+      // console.log(audioSrc)
 
-        recognition.onspeechend = function() {
-            // instructions.innerText = 'You were quiet for a while so Voice recognition turned itself off.';
-            instructions.innerText = 'Voice recognition turned off.';
-        }
+      // Pass the audio url to the 2nd video tag
+      playAudio.src = audioSrc;
+    }
+  })
 
-        recognition.onerror = function(event) {
-            if(event.error == 'no-speech') {
-                instructions.innerText = 'No speech was detected. Try again.';
-            };
-        }
+  // If any error occurs then handles the error
+  .catch(function (err) {
+    console.log(err.name, err.message);
+  });
 
-        recognition.onresult = function(event) {
-            // event is a SpeechRecognitionEvent object.
-            // It holds all the lines we have captured so far.
-            // We only need the current one.
-            var current = event.resultIndex;
+// Check  speech-to-text API supported or not?
+try {
+  var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var recognition = new SpeechRecognition();
+} catch (e) {
+  alert('Speech Recongition is not supported on this browser');
+}
 
-            // Get a transcript of what was said.
-            var transcript = event.results[current][0].transcript;
+let instructions = document.getElementById('instructions');
+let noteContent = document.getElementById('noteContent')
 
-            // Add the current transcript to the contents of our Note.
-            // noteContent += transcript;
-            noteTextarea.innerText = transcript;
-        }
+// Define some event handlers listening to changes in the API
+recognition.onstart = function () {
+  instructions.innerHTML = 'Voice recognition activated.<br/>Try speaking into the microphone.';
+}
 
-        navigator.mediaDevices.getUserMedia({video: true}).then(mediaStream => {
-          const video = document.getElementById('video-cam');
-          video.srcObject = mediaStream;
-          video.onloadedmetadata = (e) => {
-            video.play();
-          };
-        }).catch(err => {
-          console.log('Video is not working');
-        });
+recognition.onspeechend = function () {
+  // instructions.innerText = 'You were quiet for a while so Voice recognition turned itself off.';
+  instructions.innerText = 'Voice recognition turned off.';
+}
+
+recognition.onerror = function (event) {
+  if (event.error == 'no-speech') {
+    instructions.innerText = 'No speech was detected. Try again.';
+  };
+}
+
+recognition.onresult = function (event) {
+  // event is a SpeechRecognitionEvent object.
+  // It holds all the lines we have captured so far.
+  // We only need the current one.
+  var current = event.resultIndex;
+
+  // Get a transcript of what was said.
+  var transcript = event.results[current][0].transcript;
+
+  // Add the current transcript to the contents of our Note.
+  // noteContent += transcript;
+  noteTextarea.innerText = transcript;
+}
+
+navigator.mediaDevices.getUserMedia({ video: true }).then(mediaStream => {
+  const video = document.getElementById('video-cam');
+  video.srcObject = mediaStream;
+  video.onloadedmetadata = (e) => {
+    video.play();
+  };
+}).catch(err => {
+  console.log('Video is not working');
+});
