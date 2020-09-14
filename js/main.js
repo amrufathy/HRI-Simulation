@@ -1,5 +1,28 @@
+// Adding responses to increase the conversation fluidity
+let responses = ["Hello, my name is Pepper. I am going to be your assistant today",
+                 "Why does this make you feel this happy?",
+                 "I feel like there is something more you might want to add",
+                 "I can hear that this does not make you happy?",
+                 "I love that you are excited",
+                 "How can you help yourself change that?",
+                 "I can feel that what you said burdens you",
+                 "How do you want to enjoy that more?",
+                 "Would you care to share more?",
+                 "It was lovely having you, bye bye."];
+let happy_responses_indicies = [1, 7]
+let sad_responses_indicies = [3, 5, 6]
+let neutral_responses_indicies = [2, 8]
+let excited_responses_indicies = [4]
+
+let welcome_response = responses[0];
+let ending_response = responses[9];
+
 let questions;
 let qIdx = 0;
+
+var interview_logging = {
+  "questions": []
+};
 
 //---------------------------------------------------------------------------------- Start Interview popup
 
@@ -85,7 +108,7 @@ navigator.mediaDevices.getUserMedia(audioIN).then(function (mediaStreamObj) {
     $('#btnStop').prop('disabled', true);
 
     // proceed through questions when user finishes recording previous answer
-    // if (qIdx < questions.length - 1) 
+    // if (qIdx < questions.length - 1)
     // qIdx++;
     // setTimeout(function () { robotSay(questions[qIdx]); }, 1000);
   });
@@ -131,8 +154,27 @@ navigator.mediaDevices.getUserMedia(audioIN).then(function (mediaStreamObj) {
       success: function (response) {
         console.log(response);
         // proceed through questions when user finishes recording previous answer
+        // Robot's response to that
+        var randomQuestionIdx;
+        switch(response) {
+          case 'neutral':
+            randomQuestionIdx = array[Math.floor(Math.random() * neutral_responses_indicies.length)];
+            break;
+          case 'sad':
+            randomResponseIdx = array[Math.floor(Math.random() * sad_responses_indicies.length)];
+            break;
+          case 'happy':
+            randomResponseIdx = array[Math.floor(Math.random() * happy_responses_indicies.length)];
+            break;
+          case 'excited':
+            randomResponseIdx = array[Math.floor(Math.random() * excited_responses_indicies.length)];
+            break;
+          default:
+            randomResponseIdx = array[Math.floor(Math.random() * excited_responses_indicies.length)];
+        }
+        setTimeout(function () { robotSay(responses[randomResponseIdx]); }, 100);
         qIdx++;
-        setTimeout(function () { robotSay(questions[qIdx]); }, 1000);
+        setTimeout(function () { robotSay(questions[qIdx]); }, 1500);
       }
     });
   }
@@ -216,9 +258,3 @@ navigator.mediaDevices.getUserMedia({ video: true }).then(mediaStream => {
 }).catch(err => {
   console.log('Video is not working');
 });
-
-//---------------------------------------------------------------------------------- Log the interview
-
-var interview_logging = {
-  "questions": []
-};
