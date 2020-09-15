@@ -1,24 +1,26 @@
 // Adding responses to increase the conversation fluidity
-let responses = ["Hello, my name is Pepper. I am going to be your assistant today",
-                 "Why does this make you feel this happy?",
-                 "I feel like there is something more you might want to add",
-                 "I can hear that this does not make you happy?",
-                 "I love that you are excited",
-                 "How can you help yourself change that?",
-                 "I can feel that what you said burdens you",
-                 "How do you want to enjoy that more?",
-                 "Would you care to share more?",
-                 "It was lovely having you, bye bye."];
-let happy_responses_indicies = [1, 7]
-let sad_responses_indicies = [3, 5, 6]
-let neutral_responses_indicies = [2, 8]
-let excited_responses_indicies = [4]
+let responses = [
+  "I am glad this makes you feel happy", // 0
+  "I am happy for you", // 1
+  "I am happy too", // 2
+  "I am sorry that burdens you", // 3
+  "I am sorry for you", // 4
+  "I feel like there is something more you might want to add", // 5
+  "I can hear that this does not make you happy", // 6
+  "I love that you are excited", // 7
+  "Very exciting!", // 8 
+  "That's OK" // 9
+];
 
-let welcome_response = responses[0];
-let ending_response = responses[9];
+let happy_responses_indicies = [0, 1, 2];
+let sad_responses_indicies = [3, 4, 5, 6];
+let neutral_responses_indicies = [9];
+let excited_responses_indicies = [7, 8];
 
 let questions;
 let qIdx = 0;
+
+let waveFlag = true;
 
 var interview_logging = {
   "questions": []
@@ -27,7 +29,7 @@ var interview_logging = {
 //---------------------------------------------------------------------------------- Start Interview popup
 
 $(document).ready(function () {
-  readTextFile('./assets/questions.txt');
+  readTextFile('./assets/questions_simplified.txt');
 
   setTimeout(function () { unfade($('#cookie-banner')[0]); }, 1000);
 });
@@ -36,9 +38,46 @@ $('#cookie-banner-close').click(function () {
   fade($('#cookie-banner')[0]);
   unfade($('#main')[0]);
 
-  // start the interview with the first question
-  setTimeout(function () { robotSay(questions[qIdx]); }, 100);
-  request('http://localhost:5000/LWave');
+  // start the interview
+  setTimeout(function () {
+    robotSay(questions[qIdx], waveFlag, function () {
+      qIdx++;
+      setTimeout(function () {
+        robotSay(questions[qIdx], waveFlag, function () {
+          qIdx++;
+          setTimeout(function () {
+            robotSay(questions[qIdx], waveFlag, function () {
+              qIdx++;
+              waveFlag = false;
+              setTimeout(function () { robotSay(questions[qIdx], waveFlag); }, 500);
+            });
+          }, 500);
+        });
+      }, 500);
+    });
+  }, 100);
+});
+
+$('#btnSkip').click(function () {
+  qIdx++;
+  setTimeout(function () { robotSay(questions[qIdx], waveFlag); }, 1000);
+
+  // Check if interview questions are over, then stringify and print the logged data
+  if (questions.length == qIdx) {
+    var logging_string = ''
+    var logged_questions = interview_logging['questions'];
+    for (var key = 0; key < logged_questions.length; key++) {
+      logging_string = logging_string.concat(`Question #${(key + 1)}:${logged_questions[key]["Pepper_Question"]}\n`,
+        `Answer:${logged_questions[key]["User_Answer"]}\n`,
+        `User Emotion:${logged_questions[key]["Emotion"]}\n`,
+        '\n');
+    }
+
+    saveTextAsFile(logging_string);
+    // Show the "End Interview" popup and hide the rest
+    fade($('#main')[0]);
+    unfade($('#ending-banner')[0]);
+  }
 });
 
 //---------------------------------------------------------------------------------- Question Speech2Text
@@ -53,15 +92,6 @@ $('#commandSayBtn').click(function () {
   const utt = new SpeechSynthesisUtterance(msg);
   // Prevent garbage collection of utt object
   console.log(utt);
-
-  utt.addEventListener('end', () => {
-    // console.log('end event triggered');
-  });
-
-  // just for debugging completeness, no errors seem to be thrown though
-  utt.addEventListener('error', (err) => {
-    console.log('err', err)
-  });
 
   speechSynthesis.cancel();
   speechSynthesis.speak(utt);
@@ -106,11 +136,6 @@ navigator.mediaDevices.getUserMedia(audioIN).then(function (mediaStreamObj) {
     mediaRecorder.stop();
     $('#btnStart').html("Start Recording");
     $('#btnStop').prop('disabled', true);
-
-    // proceed through questions when user finishes recording previous answer
-    // if (qIdx < questions.length - 1)
-    // qIdx++;
-    // setTimeout(function () { robotSay(questions[qIdx]); }, 1000);
   });
 
   // If audio data available then push
@@ -152,34 +177,35 @@ navigator.mediaDevices.getUserMedia(audioIN).then(function (mediaStreamObj) {
       url: 'http://localhost:5001/emotion',
       data: { file_name: `answerToQuestion${qIdx.toString()}.mp3` },
       success: function (response) {
-        console.log(response);
-        // proceed through questions when user finishes recording previous answer
+        $('#emotion-area').html(response);
         // Robot's response to that
-        var randomQuestionIdx;
-        switch(response) {
-          case 'neutral':
-            randomQuestionIdx = array[Math.floor(Math.random() * neutral_responses_indicies.length)];
-            break;
+        let randomResponseIdx;
+
+        switch (response) {
           case 'sad':
-            randomResponseIdx = array[Math.floor(Math.random() * sad_responses_indicies.length)];
+            randomResponseIdx = sad_responses_indicies.sample();
             break;
           case 'happy':
-            randomResponseIdx = array[Math.floor(Math.random() * happy_responses_indicies.length)];
+            randomResponseIdx = happy_responses_indicies.sample();
             break;
           case 'excited':
-            randomResponseIdx = array[Math.floor(Math.random() * excited_responses_indicies.length)];
+            randomResponseIdx = excited_responses_indicies.sample();
             break;
           default:
-            randomResponseIdx = array[Math.floor(Math.random() * excited_responses_indicies.length)];
+            randomResponseIdx = neutral_responses_indicies.sample();
         }
-        setTimeout(function () { robotSay(responses[randomResponseIdx]); }, 100);
-        qIdx++;
-        setTimeout(function () { robotSay(questions[qIdx]); }, 1500);
+
+        setTimeout(function () {
+          robotSay(responses[randomResponseIdx], null, function () {
+            // proceed through questions when user finishes recording previous answer
+            qIdx++;
+            setTimeout(function () { robotSay(questions[qIdx], waveFlag); }, 1000);
+          });
+        }, 100);
       }
     });
   }
 })
-
   // If any error occurs then handles the error
   .catch(function (err) {
     console.log(err.name, err.message);
@@ -225,9 +251,9 @@ recognition.onresult = function (event) {
   interview_logging['questions'].push({
     "Pepper_Question": $('#robot_question').html().trim(),
     "User_Answer": $('#noteTextarea').html().trim(),
-    "Emotion": "API RESPONSE"
+    "Emotion": $('#emotion-area').html().trim()
   });
-  // console.log(interview_logging);
+  
   // Check if interview questions are over, then stringify and print the logged data
   if (questions.length == qIdx) {
     var logging_string = ''

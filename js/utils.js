@@ -1,23 +1,49 @@
+let waveIdx = 0;
+
 function readTextFile(file) {
     $.get(file, function (data) {
         questions = data.split('\n');
-        console.log(questions);
     }, 'text');
 }
 
 
-function robotSay(msg) {
+function robotSay(msg, wave, cb) {
     $('#robot_question').html(msg);
     const utt = new SpeechSynthesisUtterance(msg);
     speechSynthesis.cancel();
     speechSynthesis.speak(utt);
+
+    if (wave === true) {
+        robotWave();
+    } else if (wave === false) {
+        robotAsk();
+    } else {
+        $.get({
+            url: `http://localhost:5000/LRAsk`
+        });
+    }
+
+    utt.onend = function () {
+        if (cb !== undefined) cb();
+    }
 }
 
+function robotWave() {
+    waveIdx++;
+    endpoint = (waveIdx % 2 == 0) ? 'LWave' : 'RWave';
 
-function request(url) {
-    var xhttp = new XMLHttpRequest();
-    xhttp.open('GET', url, true);
-    xhttp.send();
+    $.get({
+        url: `http://localhost:5000/${endpoint}`
+    });
+}
+
+function robotAsk() {
+    waveIdx++;
+    endpoint = (waveIdx % 2 == 0) ? 'LAsk' : 'RAsk';
+
+    $.get({
+        url: `http://localhost:5000/${endpoint}`
+    });
 }
 
 
@@ -60,4 +86,8 @@ function saveTextAsFile(textToWrite) {
     a.download = fileNameToSaveAs;
     a.click();
     window.URL.revokeObjectURL(textFileAsBlob);
+}
+
+Array.prototype.sample = function () {
+    return this[(Math.random() * this.length) | 0];
 }

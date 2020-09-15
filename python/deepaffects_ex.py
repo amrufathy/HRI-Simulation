@@ -68,9 +68,9 @@ def get_emotion():
 
         d = Counter(d)
         word, _ = d.most_common(1)[0]
-        print(f"most common sentiment: {word}")
+        print(f"most common sentiment: {word.lower()}")
 
-        return word
+        return word.lower()
     else:
         print(f"{file_path} isn't a file!")
         return "error"
